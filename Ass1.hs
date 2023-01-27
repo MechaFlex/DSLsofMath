@@ -68,6 +68,18 @@ testEnv = [("x", S [S [S []], S []]), ("y", S [S []])]
 testSyntax :: TERM String
 testSyntax = Intersection (Var "x") (Var "y")
 
+
+--Test intersection
+testIntersectionEnv1 :: Env String Set
+testIntersectionEnv1 = [("x", S [S [S []], S []]), ("y", S [S []]), ("z" , S[S[S[S[S[]]]]])]
+
+testIntersection :: Bool
+testIntersection = eval testIntersectionEnv1 (Intersection (Var "x") (Var "x")) == eval testIntersectionEnv1 (Var "x")
+testIntersection2 :: Bool
+testIntersection2 = eval testIntersectionEnv1 (Intersection (Var "x") (Var "y")) /= eval testIntersectionEnv1 (Var "x")
+testIntersection3 :: Bool
+testIntersection3 = eval testIntersectionEnv1 (Intersection (Var "z") (Var "y")) == S []
+
 testElem = check testEnv (Elem (Var "x") (Var "y"))
 
 testSubset = check testEnv (Subset (Var "y") (Var "x"))
