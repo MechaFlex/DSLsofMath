@@ -1,4 +1,4 @@
-import Data.List (lookup, nub)
+import Data.List (lookup, nub, sort)
 import Data.Maybe (fromMaybe)
 
 data TERM v
@@ -17,7 +17,14 @@ data PRED v
   | Implies (PRED v) (PRED v)
 
 newtype Set = S [Set]
-  deriving (Show, Eq)
+  deriving (Show, Ord)
+
+instance Eq Set where
+  a == b = settify a == settify b
+
+settify :: Set -> Set
+settify (S []) = S []
+settify (S sets) = S (sort $ nub (map settify sets))
 
 type Env var dom = [(var, dom)]
 
@@ -85,3 +92,24 @@ testElem = check testEnv (Elem (Var "x") (Var "y"))
 testSubset = check testEnv (Subset (Var "y") (Var "x"))
 
 testMax = check testEnv (Implies (Elem (Var "y") (Var "x")) (Subset (Var "y") (Var "x")))
+
+--Sikai
+
+test0 :: Set
+test0 = S [S [], S []]
+test1 :: Set
+test1 = S [S []]
+test2 :: Set
+test2 = S [test0, test1]
+test3 :: Set
+test3 = S [test1, test0]
+test4 :: Set
+test4 = S [test0, test1, test0]
+
+test5 :: Set
+test5 = S [test3]
+test6 :: Set
+test6 = S [test4]
+
+test7 = S [test1, S [test1]]
+test8 = S [S [test1], test1]
