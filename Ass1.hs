@@ -2,7 +2,7 @@ import Data.List (lookup, nub, sort)
 import Data.Maybe (fromMaybe)
 
 -- Group A1.04
--- Jacob Bengtsson, Agnes Brogeby, Felix Chofleur Johansson
+-- Jacob Bengtsson, Agnes Brogeby
 
 data TERM v
   = Empty
@@ -23,11 +23,13 @@ newtype Set = S [Set]
   deriving (Show, Ord)
 
 instance Eq Set where
-  a == b = settify a == settify b
+  (==) a b = formatSet a `setEqual` formatSet b
+    where setEqual :: Set -> Set -> Bool
+          setEqual (S xs) (S ys) = xs == ys   
 
-settify :: Set -> Set
-settify (S []) = S []
-settify (S sets) = S (sort $ nub (map settify sets))
+formatSet :: Set -> Set
+formatSet (S []) = S []
+formatSet (S sets) = S (sort $ nub (map formatSet sets))
 
 type Env var dom = [(var, dom)]
 
@@ -51,7 +53,8 @@ check env (Subset t1 t2)  = and [ x `elem` getElemsInSet (eval env t2)
 check env (Not p)         = not (check env p)
 check env (And p1 p2)     = check env p1 && check env p2
 check env (Or p1 p2)      = check env p1 || check env p2
-check env (Implies p1 p2) = not (check env p1) || check env p2
+check env (Implies p1 p2) = p1 ==> p2
+  where (==>) p1 p2 = not (check env p1) || check env p2
 
 getElemsInSet :: Set -> [Set]
 getElemsInSet (S elems) = elems
@@ -60,17 +63,21 @@ vonNeumann :: Int -> TERM v
 vonNeumann 0 = Empty
 vonNeumann n = Union (vonNeumann (n-1)) (Singleton (vonNeumann (n-1)))
 
-claim1 :: Eq v => TERM v -> TERM v -> Bool
-claim1 n1 n2 = not (showVonNeumann n1 <= showVonNeumann n2) || check [] (Subset n1 n2) 
+claim1 :: Int -> Int -> Bool
+claim1 n1 n2 = not (n1 <= n2) || check emptyEnv (Subset (vonNeumann n1) (vonNeumann n2))
 
-claim2 :: Eq v => TERM v -> [Int]
-claim2 n = map (length . getElemsInSet) (getElemsInSet (eval [] n))
+claim2 :: Int -> Bool
+claim2 n = eval emptyEnv (vonNeumann n) == S [ eval emptyEnv (vonNeumann x) | x <- [0..(n-1)] ]
 
 showVonNeumann :: Eq v => TERM v -> Int
 showVonNeumann n = length $ getElemsInSet $ eval [] n
 
+emptyEnv :: Env [()] v
+emptyEnv = []
 
--- testing below
+
+-- TESTING BELOW
+
 testEnv :: Env String Set
 -- testEnv = [("x",S (S ( S []))),("y", S [])]
 testEnv = [("x", S [S [S []], S []]), ("y", S [S []])]
@@ -116,3 +123,12 @@ test6 = S [test4]
 
 test7 = S [test1, S [test1]]
 test8 = S [S [test1], test1]
+
+dup x y = Union (Singleton x) (Singleton y)
+s0 = Empty
+s1 = Singleton s0
+a = dup s0 s1
+b = dup s1 s0
+ev = eval emptyEnv
+testUn1 = ev a == ev b
+testUn2 = ev (dup a b) == ev (Singleton a)
