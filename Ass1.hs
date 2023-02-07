@@ -1,6 +1,9 @@
 import Data.List (lookup, nub)
 import Data.Maybe (fromMaybe)
 
+-- Group A1.04
+-- Jacob Bengtsson, Agnes Brogeby, Felix Chofleur Johansson
+
 data TERM v
   = Empty
   | Singleton (TERM v)
